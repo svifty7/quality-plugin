@@ -3,6 +3,7 @@ import type { Plugin } from 'vitest/config';
 import { join } from 'node:path';
 
 import SonarReporter from 'vitest-sonar-reporter';
+import { configDefaults } from 'vitest/config';
 
 import { DEFAULT_REPORTS_DIR, TEST_REPORT_FILE } from './constants.ts';
 
@@ -54,8 +55,9 @@ export function quality(): Plugin {
       return {
         test: {
           reporters: [
-            // A plugin-provided list would otherwise replace Vitest's default reporter
-            ...(userReporters.length === 0 ? ['default'] : []),
+            // A plugin-provided list would otherwise replace the reporters
+            // Vitest selects for AI agents and GitHub Actions
+            ...(userReporters.length === 0 ? configDefaults.reporters : []),
             ...(hasSonarReporter(userReporters)
               ? []
               : [
