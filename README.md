@@ -31,7 +31,7 @@ The plugin only extends your configuration. Values from your Vitest config and C
 
 | Option                   | What the plugin does                                                                                                          |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `test.reporters`         | Adds `vitest-sonar-reporter`, writing `sonar-report.xml` to `coverage.reportsDirectory`. Keeps `default` if the list is empty |
+| `test.reporters`         | Adds `vitest-sonar-reporter`, writing `sonar-report.xml` to `coverage.reportsDirectory`. Keeps Vitest's default reporters if the list is empty |
 | `test.coverage.enabled`  | `true` if not set                                                                                                             |
 | `test.coverage.provider` | `v8` if not set                                                                                                               |
 | `test.coverage.reporter` | `text-summary` and `lcov` if not set; otherwise adds `lcov`                                                                   |

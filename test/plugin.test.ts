@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import SonarReporter from 'vitest-sonar-reporter';
+import { configDefaults } from 'vitest/config';
 import { createVitest } from 'vitest/node';
 
 import { quality } from '../src';
@@ -54,7 +55,11 @@ describe('quality', () => {
   it('fills an empty config', async () => {
     const { coverage, reporters } = await resolveConfig();
 
-    expect(reporterNames(reporters)).toEqual(['default', 'sonar']);
+    expect(reporterNames(reporters)).toEqual([
+      ...configDefaults.reporters,
+      'sonar',
+    ]);
+
     expect(coverage.enabled).toBe(true);
     expect(coverage.provider).toBe('v8');
 
