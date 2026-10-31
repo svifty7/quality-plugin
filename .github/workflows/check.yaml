@@ -8,10 +8,6 @@ on:
       - synchronize
       - ready_for_review
 
-  push:
-    branches:
-      - dev
-
   workflow_call:
 
 permissions:
@@ -101,7 +97,7 @@ jobs:
     needs: [lint, typecheck, test, build]
     if: >-
       ${{ vars.SONAR_ORGANIZATION != '' && (
-        github.ref == 'refs/heads/dev'
+        github.ref == 'refs/heads/main'
         || github.event.pull_request.head.repo.full_name == github.repository
       ) }}
     runs-on: ubuntu-latest

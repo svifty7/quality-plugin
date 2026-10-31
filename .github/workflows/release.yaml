@@ -18,6 +18,7 @@ concurrency:
 jobs:
   check:
     uses: ./.github/workflows/check.yaml
+    secrets: inherit
 
   release:
     needs: check
