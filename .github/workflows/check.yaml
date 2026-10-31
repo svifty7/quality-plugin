@@ -1,0 +1,126 @@
+name: Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+  push:
+    branches:
+      - dev
+
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      - name: Lint
+        run: pnpm run lint
+
+  typecheck:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      - name: Typecheck
+        run: pnpm run type-check
+
+  test:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Test
+        run: pnpm run test
+
+      - name: Upload reports
+        if: ${{ matrix.node-version == 24 }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 1
+
+  build:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+
+      # tsdown also validates the package exports with attw
+      - name: Build
+        run: pnpm run build
+
+      - name: Pack
+        run: pnpm pack --pack-destination "$RUNNER_TEMP"
+
+      # Without SONAR_* the CLI has to stop before reaching the scanner
+      - name: Smoke test CLI
+        run: |
+          status=0
+          output=$(node dist/cli.mjs 2>&1) || status=$?
+          echo "$output"
+          test "$status" -eq 1
+          echo "$output" | grep -q SONAR_HOST_URL
+
+  # SonarQube Cloud detects the branch or pull request on its own. Fork PRs are
+  # skipped because they get no secrets. To enable: import the repository, turn
+  # off Automatic Analysis there, set the SONAR_ORGANIZATION variable and the
+  # SONAR_TOKEN secret.
+  sonar:
+    needs: [lint, typecheck, test, build]
+    if: >-
+      ${{ vars.SONAR_ORGANIZATION != '' && (
+        github.ref == 'refs/heads/dev'
+        || github.event.pull_request.head.repo.full_name == github.repository
+      ) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # blame data for new code detection
+
+      - uses: ./.github/actions/setup
+
+      - name: Download reports
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage
+          path: coverage
+
+      - name: SonarQube Cloud
+        run: pnpm run sonar -Dsonar.projectKey="${SONAR_ORGANIZATION}_quality-plugin"
+        env:
+          SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

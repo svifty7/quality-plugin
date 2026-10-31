@@ -1,0 +1,86 @@
+{
+  "name": "@svifty7/quality-plugin",
+  "type": "module",
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.32.1",
+  "description": "Vitest plugin and CLI for SonarQube analysis by svifty7",
+  "author": "svifty7 (https://github.com/svifty7)",
+  "license": "MIT",
+  "homepage": "https://github.com/svifty7/quality-plugin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/svifty7/quality-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/svifty7/quality-plugin/issues"
+  },
+  "keywords": [
+    "vitest-plugin",
+    "sonarqube",
+    "coverage"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.mts",
+  "bin": {
+    "quality-scan": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": "^22.22.2 || >=24.15.0"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "watch": "tsdown --watch",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "type-check": "tsc --noEmit",
+    "prepack": "pnpm build",
+    "release": "bumpp --no-tag --no-push",
+    "prepare": "simple-git-hooks",
+    "test": "vitest run",
+    "sonar": "node src/cli.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "@vitest/coverage-v8": "^5.0.0",
+    "vitest": "^5.0.0"
+  },
+  "dependencies": {
+    "@sonar/scan": "5.0.2",
+    "vitest-sonar-reporter": "^3.0.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
+    "@svifty7/eslint-config": "^0.3.0",
+    "@types/node": "^25.9.9",
+    "@vitest/coverage-v8": "^5.0.5",
+    "bumpp": "^12.3.0",
+    "eslint": "^10.4.0",
+    "jiti": "^2.7.0",
+    "nano-staged": "^1.0.2",
+    "simple-git-hooks": "^2.14.0",
+    "tsdown": "^0.23.2",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm nano-staged"
+  },
+  "volta": {
+    "pnpm": "10.32.1",
+    "node": "24.22.1"
+  }
+}

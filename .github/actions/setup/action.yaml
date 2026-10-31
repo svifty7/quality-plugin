@@ -1,0 +1,27 @@
+name: Setup
+description: Install pnpm, Node.js and project dependencies
+
+inputs:
+  node-version:
+    description: Node.js version
+    default: lts/*
+  registry-url:
+    description: Registry to authenticate against
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@v6
+
+    - name: Set node
+      uses: actions/setup-node@v7
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+        cache: pnpm
+
+    - name: Install
+      shell: bash
+      run: pnpm install --frozen-lockfile
