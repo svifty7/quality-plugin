@@ -1,16 +1,16 @@
 # @svifty7/quality-plugin
 
-Подключает проект на Vitest к SonarQube одним пакетом: плагин настраивает отчёты о тестах и покрытии, а команда `quality-scan` запускает анализ. Настраивать нужно только переменные окружения.
+Connects a Vitest project to SonarQube with a single package: the plugin sets up test and coverage reports, and the `quality-scan` command runs the analysis. The only thing you configure is environment variables.
 
-## Установка
+## Installation
 
 ```bash
 pnpm add -D @svifty7/quality-plugin vitest
 ```
 
-Нужны Node.js `^22.22.2 || >=24.15.0` и Vitest 5. `@vitest/coverage-v8` объявлен как peer-зависимость: pnpm ставит его сам, если не отключён `auto-install-peers`. Иначе установите его отдельно, в той же версии, что и Vitest. `@sonar/scan` и `vitest-sonar-reporter` устанавливаются вместе с пакетом.
+Requires Node.js `^22.22.2 || >=24.15.0` and Vitest 5. `@vitest/coverage-v8` is a peer dependency: pnpm installs it for you unless `auto-install-peers` is turned off. Otherwise, install it separately, in the same version as Vitest. `@sonar/scan` and `vitest-sonar-reporter` come with the package.
 
-## Настройка Vitest
+## Vitest setup
 
 ```ts
 // vitest.config.ts
@@ -27,30 +27,30 @@ export default defineConfig({
 });
 ```
 
-Плагин только дополняет конфигурацию. Значения из конфига и CLI Vitest сохраняются:
+The plugin only extends your configuration. Values from your Vitest config and CLI are kept:
 
-| Настройка                | Что делает плагин                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test.reporters`         | Добавляет `vitest-sonar-reporter` с отчётом `sonar-report.xml` в папке `coverage.reportsDirectory`. Если список пуст, оставляет и `default` |
-| `test.coverage.enabled`  | `true`, если не задано                                                                                                                      |
-| `test.coverage.provider` | `v8`, если не задано                                                                                                                        |
-| `test.coverage.reporter` | `text-summary` и `lcov`, если не задано; иначе добавляет `lcov`                                                                             |
+| Option                   | What the plugin does                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `test.reporters`         | Adds `vitest-sonar-reporter`, writing `sonar-report.xml` to `coverage.reportsDirectory`. Keeps `default` if the list is empty |
+| `test.coverage.enabled`  | `true` if not set                                                                                                             |
+| `test.coverage.provider` | `v8` if not set                                                                                                               |
+| `test.coverage.reporter` | `text-summary` and `lcov` if not set; otherwise adds `lcov`                                                                   |
 
-Ограничения:
+Limitations:
 
-- Флаг `--reporter` заменяет весь список репортёров, поэтому `vitest run --reporter=dot` не создаст `sonar-report.xml`.
-- Файл `lcov.info` не появится при `--coverage.enabled=false` и при упавших тестах, пока не включён `coverage.reportOnFailure`.
-- `vitest-sonar-reporter`, добавленный в конфиг вручную, пишет отчёт по своему `outputFile`. `quality-scan` его не учитывает.
+- The `--reporter` flag replaces the whole reporter list, so `vitest run --reporter=dot` does not produce `sonar-report.xml`.
+- `lcov.info` is not written with `--coverage.enabled=false`, or when tests fail unless `coverage.reportOnFailure` is on.
+- A `vitest-sonar-reporter` you add to the config yourself writes to its own `outputFile`, which `quality-scan` does not take into account.
 
-## Переменные окружения
+## Environment variables
 
-| Переменная                    | Обязательна | Описание                                     |
-| ----------------------------- | ----------- | -------------------------------------------- |
-| `SONAR_HOST_URL`              | да          | Адрес сервера SonarQube                      |
-| `SONAR_TOKEN`                 | да          | Токен анализа                                |
-| `SONAR_SCANNER_JAVA_EXE_PATH` | нет         | Путь к `java`. С ним сканер не скачивает JRE |
+| Variable                      | Required | Description                                                   |
+| ----------------------------- | -------- | ------------------------------------------------------------- |
+| `SONAR_HOST_URL`              | yes      | SonarQube server URL                                          |
+| `SONAR_TOKEN`                 | yes      | Analysis token                                                |
+| `SONAR_SCANNER_JAVA_EXE_PATH` | no       | Path to `java`. When set, the scanner does not download a JRE |
 
-`quality-scan` читает `SONAR_*` из файла `.env` в текущей папке. Остальные настройки сканера тоже можно задать так: например, `SONAR_SCANNER_FOO_BAR` становится свойством `sonar.scanner.fooBar`. Переменные, уже заданные в окружении, важнее значений из `.env`. Файл `.env` необязателен и не должен попадать в git.
+`quality-scan` reads `SONAR_*` from the `.env` file in the current directory. Other scanner settings work the same way: for example, `SONAR_SCANNER_FOO_BAR` becomes the `sonar.scanner.fooBar` property. Variables already set in the environment take priority over `.env`. The `.env` file is optional and should stay out of git.
 
 ```dotenv
 SONAR_HOST_URL=http://localhost:9000
@@ -58,7 +58,7 @@ SONAR_TOKEN=squ_...
 SONAR_SCANNER_JAVA_EXE_PATH=/path/to/jdk/bin/java
 ```
 
-## Запуск
+## Usage
 
 ```json
 {
@@ -77,43 +77,43 @@ pnpm test
 pnpm sonar
 ```
 
-Команда принимает `-Dсвойство=значение` и `-X` (подробный лог). При ошибке она завершается с кодом сканера или с кодом 1, если кода нет.
+The command accepts `-Dproperty=value` and `-X` (verbose log). On failure it exits with the scanner's exit code, or with 1 if there is none.
 
 ```bash
 pnpm sonar -Dsonar.branch.name=dev -X
 ```
 
-## Значения по умолчанию
+## Defaults
 
-Если `sonar-project.properties` нет, `quality-scan` подставляет:
+Without a `sonar-project.properties` file, `quality-scan` sets:
 
-| Свойство                            | Значение                                                      |
-| ----------------------------------- | ------------------------------------------------------------- |
-| `sonar.projectKey`                  | `scope:name` для пакета `@scope/name`                         |
-| `sonar.sources`                     | `src`, если папка есть                                        |
-| `sonar.tests`                       | `test` или `tests`, если папка есть                           |
-| `sonar.testExecutionReportPaths`    | `sonar-report.xml` в папке отчётов, если найдена папка тестов |
-| `sonar.javascript.lcov.reportPaths` | `lcov.info` в папке отчётов, если найдена папка тестов        |
+| Property                            | Value                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------- |
+| `sonar.projectKey`                  | `scope:name` for a package named `@scope/name`                            |
+| `sonar.sources`                     | `src`, if the directory exists                                            |
+| `sonar.tests`                       | `test` or `tests`, if the directory exists                                |
+| `sonar.testExecutionReportPaths`    | `sonar-report.xml` in the reports directory, if a test directory is found |
+| `sonar.javascript.lcov.reportPaths` | `lcov.info` in the reports directory, if a test directory is found        |
 
-Папку отчётов `quality-scan` берёт из `coverage.reportsDirectory` конфига Vitest: для этого он загружает конфиг, но тесты не запускает. Если конфиг не загрузился, команда предупредит об этом и будет искать отчёты в `coverage`.
+`quality-scan` takes the reports directory from `coverage.reportsDirectory` in your Vitest config: it loads the config but does not run the tests. If the config fails to load, the command prints a warning and looks for reports in `coverage`.
 
-Имя, версию и ссылки проекта сканер определяет сам. Без области в имени пакета `sonar.projectKey` тоже остаётся за сканером.
+The scanner works out the project name, version and links on its own. For a package name without a scope, `sonar.projectKey` is left to the scanner too.
 
-Опции `scan()` важнее файла, поэтому при наличии `sonar-project.properties` значения по умолчанию не передаются вообще: файл должен описывать проект целиком, включая пути к отчётам. Приоритет такой, от высшего к низшему:
+`scan()` options outrank the file, so when `sonar-project.properties` exists, no defaults are passed at all: the file has to describe the whole project, including report paths. Priority, from highest to lowest:
 
-1. Аргументы `-D`.
-2. Значения по умолчанию из таблицы выше.
-3. Переменные окружения, включая `SONAR_SCANNER_JSON_PARAMS`.
+1. `-D` arguments.
+2. The defaults from the table above.
+3. Environment variables, including `SONAR_SCANNER_JSON_PARAMS`.
 4. `sonar-project.properties`.
 5. `package.json`.
 
-Если задаёте `sonar.sources` или `sonar.tests` через `SONAR_SCANNER_JSON_PARAMS`, значения по умолчанию их перекроют. В таком случае заведите `sonar-project.properties` или передайте свойства через `-D`.
+If you set `sonar.sources` or `sonar.tests` through `SONAR_SCANNER_JSON_PARAMS`, the defaults override them. In that case, add a `sonar-project.properties` file or pass the properties with `-D`.
 
-Если тесты лежат рядом с кодом в `src`, папка тестов не будет найдена. Опишите проект в `sonar-project.properties` с `sonar.tests`, `sonar.test.inclusions` и `sonar.exclusions`.
+If your tests live next to the code in `src`, no test directory is found. Describe the project in `sonar-project.properties` using `sonar.tests`, `sonar.test.inclusions` and `sonar.exclusions`.
 
 ## CI
 
-Сначала запустите тесты, затем анализ. Для GitHub Actions:
+Run the tests first, then the analysis. For GitHub Actions:
 
 ```yaml
 - name: Test
@@ -126,7 +126,7 @@ pnpm sonar -Dsonar.branch.name=dev -X
     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 ```
 
-Для SonarQube Cloud задайте адрес `https://sonarcloud.io`, организацию и ключ проекта, если он отличается от `scope:name`. Автоматический анализ в настройках проекта нужно выключить (Administration → Analysis Method), иначе анализ из CI завершится ошибкой.
+For SonarQube Cloud, set the URL to `https://sonarcloud.io`, along with your organization and the project key if it differs from `scope:name`. Turn off Automatic Analysis in the project settings (Administration → Analysis Method), otherwise the CI analysis fails.
 
 ```yaml
 - name: SonarQube Cloud
@@ -137,8 +137,8 @@ pnpm sonar -Dsonar.branch.name=dev -X
     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 ```
 
-SonarQube берёт историю из git, поэтому в шаге `actions/checkout` задайте `fetch-depth: 0`.
+SonarQube reads history from git, so set `fetch-depth: 0` on the `actions/checkout` step.
 
-## Лицензия
+## License
 
 [MIT](./LICENSE)
